@@ -22,48 +22,25 @@
   "Hook called by \"cisco-router-mode\"")
 
 (defvar cisco-router-mode-map
-  (let 
+  (let
       ((cisco-router-mode-map (make-keymap)))
     (define-key cisco-router-mode-map "\C-j" 'newline-and-indent)
     cisco-router-mode-map)
   "Keymap for Cisco router configuration major mode")
 
-;; Font locking definitions. 
-(defvar cisco-router-command-face 'cisco-router-command-face "Face for basic router commands")
-(defvar cisco-router-toplevel-face 'cisco-router-toplevel-face "Face for top level commands")
-(defvar cisco-router-no-face 'cisco-router-no-face "Face for \"no\"")
-(defvar cisco-router-ipadd-face 'cisco-router-ipadd-face "Face for IP addresses")
+(defface cisco-router-font-lock-desc-face
+  '((t (:inherit font-lock-variable-name-face
+	      :underline t)))
+    "cisco-router description underlining face")
 
-(defface cisco-router-ipadd-face
-  '(
-    (((type tty) (class color)) (:foreground "yellow"))
-    (((type graphic) (class color)) (:foreground "LightGoldenrod"))
-    (t (:foreground "LightGoldenrod" ))
-    )
-  "Face for IP addresses")
+;; Font locking definitions.
 
-(defface cisco-router-command-face 
-  '(
-    (((type tty) (class color)) (:foreground "cyan"))
-    (((type graphic) (class color)) (:foreground "cyan"))
-    (t (:foreground "cyan" ))
-    )
-  "Face for basic router commands")
-
-(defface cisco-router-toplevel-face
-  '(
-    (((type tty) (class color)) (:foreground "blue"))
-    (((type graphic) (class color)) (:foreground "lightsteelblue"))
-    (t (:foreground "lightsteelblue" ))
-    )
-  "Face for basic router commands")
-
-(defface cisco-router-no-face
-  '(
-    (t (:underline t))
-    )
-  "Face for \"no\"")
-
+(defvar cisco-router-command-face 'font-lock-func-name-face "Face for basic router commands")
+(defvar cisco-router-toplevel-face 'font-lock-constant-face "Face for top level commands")
+(defvar cisco-router-no-face 'font-lock-negation-char-face "Face for \"no\"")
+(defvar cisco-router-ipadd-face 'font-lock-string-face "Face for IP addresses")
+(defvar cisco-router-name-face 'font-lock-variable-name-face "Face for various names")
+(defvar cisco-router-desc-face 'cisco-router-font-lock-desc-face "Face for various descriptions")
 
 ;; (regexp-opt '("interface" "ip vrf" "controller" "class-map" "redundancy" "line" "policy-map" "router" "access-list" "route-map") t)
 ;; (regexp-opt '("diagnostic" "hostname" "logging" "service" "alias" "snmp-server" "boot" "card" "vtp" "version" "enable") t)
@@ -73,26 +50,30 @@
    '( "\\<\\(access-list\\|c\\(?:lass-map\\|ontroller\\)\\|i\\(?:nterface\\|p vrf\\)\\|line\\|policy-map\\|r\\(?:edundancy\\|oute\\(?:-map\\|r\\)\\)\\)\\>". cisco-router-toplevel-face)
    '( "\\<\\(alias\\|boot\\|card\\|diagnostic\\|^enable\\|hostname\\|logging\\|s\\(?:ervice\\|nmp-server\\)\\|v\\(?:ersion\\|tp\\)\\)\\>" . cisco-router-command-face)
    '("\\<\\(no\\)\\>" . cisco-router-no-face)
-   '("\\<\\([0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\)\\>" . cisco-router-ipadd-face)
+   '("\\<\\([0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\)\\(/[0-9]+\\)\?\\>" . cisco-router-ipadd-face)
+   '("neighbor\s+\\(\\w+\\)" 1 cisco-router-name-face) ; neighbor names
+   '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face) ; router process/asn/id
+   '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)	   ; Interface/Peer description
    )
   "Font locking definitions for cisco router mode")
 
-;; Imenu definitions. 
+;; Imenu definitions.
 (defvar cisco-router-imenu-expression
   '(
     ("Interfaces"        "^[\t ]*interface *\\(.*\\)" 1)
     ("VRFs"              "^ip vrf *\\(.*\\)" 1)
-    ("Controllers"       "^[\t ]*controller *\\(.*\\)" 1)
     ("Routing protocols" "^router *\\(.*\\)" 1)
+    ("Route maps"        "^route-map *\\(.*\\)" 1)
     ("Class maps"        "^class-map *\\(.*\\)" 1)
+    ("Controllers"       "^[\t ]*controller *\\(.*\\)" 1)
     ("Policy maps"       "^policy-map *\\(.*\\)" 1)
     ))
-  
+
 ;; Indentation definitions.
 (defun cisco-router-indent-line ()
   "Indent current line as cisco router config line"
-  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map")
-	(indent1 " *main-cpu\\| *class\\W"))
+  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map\\|ip prefix-list")
+	(indent1 " *main-cpu\\| *class\\W\\| *address-family"))
     (beginning-of-line)
     (let ((not-indented t)
 	  (cur-indent 0))
@@ -119,7 +100,7 @@
 ;		 (message "Reached !")
 		 (setq cur-indent 0
 		       not-indented nil))
-		((bobp) 
+		((bobp)
 ;		 (message "Buffer beginning reached")
 		 (setq cur-indent 0
 		       not-indented nil)))))
@@ -127,12 +108,12 @@
 
 
 ;; Custom syntax table
-(defvar cisco-router-mode-syntax-table (make-syntax-table) 
+(defvar cisco-router-mode-syntax-table (make-syntax-table)
   "Syntax table for cisco router mode")
 
-(modify-syntax-entry ?_ "w" cisco-router-mode-syntax-table) ;All _'s are part of words. 
-(modify-syntax-entry ?- "w" cisco-router-mode-syntax-table) ;All -'s are part of words. 
-(modify-syntax-entry ?! "<" cisco-router-mode-syntax-table) ;All !'s start comments. 
+(modify-syntax-entry ?_ "w" cisco-router-mode-syntax-table) ;All _'s are part of words.
+(modify-syntax-entry ?- "w" cisco-router-mode-syntax-table) ;All -'s are part of words.
+(modify-syntax-entry ?! "<" cisco-router-mode-syntax-table) ;All !'s start comments.
 (modify-syntax-entry ?\n ">" cisco-router-mode-syntax-table) ;All newlines end comments.
 (modify-syntax-entry ?\r ">" cisco-router-mode-syntax-table) ;All linefeeds end comments.
 
@@ -147,7 +128,7 @@
   (set (make-local-variable 'indent-line-function) 'cisco-router-indent-line)
   (set (make-local-variable 'comment-start) "!")
   (set (make-local-variable 'comment-start-skip) "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\)!+ *")
-  (setq imenu-case-fold-search nil)  
+  (setq imenu-case-fold-search nil)
   (set (make-local-variable 'imenu-generic-expression) cisco-router-imenu-expression)
   (imenu-add-to-menubar "Imenu")
   (setq major-mode 'cisco-router-mode
