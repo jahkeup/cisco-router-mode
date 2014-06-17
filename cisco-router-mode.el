@@ -51,12 +51,15 @@
    '( "\\<\\(alias\\|boot\\|card\\|diagnostic\\|^enable\\|hostname\\|logging\\|s\\(?:ervice\\|nmp-server\\)\\|v\\(?:ersion\\|tp\\)\\)\\>" . cisco-router-command-face)
    '("\\<\\(no\\)\\>" . cisco-router-no-face)
    '("\\<\\([0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\)\\(/[0-9]+\\)\?\\>" . cisco-router-ipadd-face)
-   '("neighbor\s+\\(\\w+\\)" 1 cisco-router-name-face) ; neighbor names
-   '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face) ; router process/asn/id
+   '("neighbor\s+\\(\\w+\\)" 1 cisco-router-name-face)                         ; neighbor names
+   '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face)           ; router process/asn/id
    '("\\(route-map\\|prefix-list\\) \\<\\(.+?\\)\\>" 2 cisco-router-name-face) ; route-map, prefix-list name
    '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)	   ; Interface/Peer description
-   '("^ +name +\\(.+\\)" 1 cisco-router-desc-face) ; Vlan names
-   '("vlan \\([0-9]+\\)" 1 cisco-router-name-face) ; Vlan number
+   '("hostname \\(.+\\)" 1 cisco-router-desc-face)		   ; hostname
+   '("ip domain-name \\(.+\\)" 1 cisco-router-desc-face)	   ; domain name
+   '("^ +name +\\(.+\\)" 1 cisco-router-desc-face)                 ; Vlan names
+   '("vlan \\(\\([,\\-]?[0-9]+\\)*\\)" 1 cisco-router-name-face)   ; Vlan number
+   '("ip community-list \\(\\w+\\) +\\(\\w+\\)" 2 cisco-router-name-face) ; community list name
    )
   "Font locking definitions for cisco router mode")
 
@@ -75,7 +78,7 @@
 ;; Indentation definitions.
 (defun cisco-router-indent-line ()
   "Indent current line as cisco router config line"
-  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map")
+  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map\\|^vlan")
 	(indent1 " *main-cpu\\| *class\\W\\| *address-family"))
     (beginning-of-line)
     (let ((not-indented t)
