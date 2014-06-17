@@ -53,6 +53,7 @@
    '("\\<\\([0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\.[0-9]\\{1,3\\}\\)\\(/[0-9]+\\)\?\\>" . cisco-router-ipadd-face)
    '("neighbor\s+\\(\\w+\\)" 1 cisco-router-name-face) ; neighbor names
    '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face) ; router process/asn/id
+   '("\\(route-map\\|prefix-list\\) \\<\\(.+?\\)\\>" 2 cisco-router-name-face) ; route-map, prefix-list name
    '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)	   ; Interface/Peer description
    )
   "Font locking definitions for cisco router mode")
