@@ -55,6 +55,8 @@
    '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face) ; router process/asn/id
    '("\\(route-map\\|prefix-list\\) \\<\\(.+?\\)\\>" 2 cisco-router-name-face) ; route-map, prefix-list name
    '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)	   ; Interface/Peer description
+   '("^ +name +\\(.+\\)" 1 cisco-router-desc-face) ; Vlan names
+   '("vlan \\([0-9]+\\)" 1 cisco-router-name-face) ; Vlan number
    )
   "Font locking definitions for cisco router mode")
 
