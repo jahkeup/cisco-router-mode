@@ -30,7 +30,7 @@
 
 (defface cisco-router-font-lock-desc-face
   '((t (:inherit font-lock-variable-name-face
-	      :underline t)))
+              :underline t)))
     "cisco-router description underlining face")
 
 ;; Font locking definitions.
@@ -54,9 +54,9 @@
    '("neighbor\s+\\(\\w+\\)" 1 cisco-router-name-face)                         ; neighbor names
    '("router +\\(\\w+\\) +\\([\\w0-9]+\\)" 2 cisco-router-name-face)           ; router process/asn/id
    '("\\(route-map\\|prefix-list\\) \\<\\(.+?\\)\\>" 2 cisco-router-name-face) ; route-map, prefix-list name
-   '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)	   ; Interface/Peer description
-   '("hostname \\(.+\\)" 1 cisco-router-desc-face)		   ; hostname
-   '("ip domain-name \\(.+\\)" 1 cisco-router-desc-face)	   ; domain name
+   '("desc\\(ription\\)? +\\(.+\\)$" 2 cisco-router-desc-face)     ; Interface/Peer description
+   '("hostname \\(.+\\)" 1 cisco-router-desc-face)                 ; hostname
+   '("ip domain-name \\(.+\\)" 1 cisco-router-desc-face)           ; domain name
    '("^ +name +\\(.+\\)" 1 cisco-router-desc-face)                 ; Vlan names
    '("vlan \\(\\([,\\-]?[0-9]+\\)*\\)" 1 cisco-router-name-face)   ; Vlan number
    '("ip community-list \\(\\w+\\) +\\(\\w+\\)" 2 cisco-router-name-face) ; community list name
@@ -78,38 +78,38 @@
 ;; Indentation definitions.
 (defun cisco-router-indent-line ()
   "Indent current line as cisco router config line"
-  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map\\|^vlan")
-	(indent1 " *main-cpu\\| *class\\W\\| *address-family"))
+  (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map\\|^vlan\\|^ip access-list")
+        (indent1 " *main-cpu\\| *class\\W\\| *address-family"))
     (beginning-of-line)
     (let ((not-indented t)
-	  (cur-indent 0))
+          (cur-indent 0))
       (cond ((or (bobp) (looking-at indent0) (looking-at "!")) ; Handles the indent0 and indent1 lines
-;	     (message "Indent0")
-	     (setq not-indented nil
-		   cur-indent 0))
-	    ((looking-at indent1)
-;	     (message "Indent1")
-	     (setq not-indented nil
-		   cur-indent 1)))
+;            (message "Indent0")
+             (setq not-indented nil
+                   cur-indent 0))
+            ((looking-at indent1)
+;            (message "Indent1")
+             (setq not-indented nil
+                   cur-indent 1)))
       (save-excursion ; Indents regular lines depending on the block they're in.
-	(while not-indented
-	  (forward-line -1)
-	  (cond ((looking-at indent1)
-;		 (message "Indent1 block")
-		 (setq cur-indent 2
-		       not-indented nil))
-		((looking-at indent0)
-;		 (message "Indent0 block")
-		 (setq cur-indent 1
-		       not-indented nil))
-		((looking-at "!")
-;		 (message "Reached !")
-		 (setq cur-indent 0
-		       not-indented nil))
-		((bobp)
-;		 (message "Buffer beginning reached")
-		 (setq cur-indent 0
-		       not-indented nil)))))
+        (while not-indented
+          (forward-line -1)
+          (cond ((looking-at indent1)
+;                (message "Indent1 block")
+                 (setq cur-indent 2
+                       not-indented nil))
+                ((looking-at indent0)
+;                (message "Indent0 block")
+                 (setq cur-indent 1
+                       not-indented nil))
+                ((looking-at "!")
+;                (message "Reached !")
+                 (setq cur-indent 0
+                       not-indented nil))
+                ((bobp)
+;                (message "Buffer beginning reached")
+                 (setq cur-indent 0
+                       not-indented nil)))))
       (indent-line-to cur-indent))))
 
 
@@ -138,7 +138,7 @@
   (set (make-local-variable 'imenu-generic-expression) cisco-router-imenu-expression)
   (imenu-add-to-menubar "Imenu")
   (setq major-mode 'cisco-router-mode
-	mode-name "Cisco router configuration")
+        mode-name "Cisco router configuration")
   (run-hooks cisco-router-mode-hook))
 
 (add-to-list 'auto-mode-alist '("\\.cfg\\'" . cisco-router-mode))
