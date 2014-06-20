@@ -78,24 +78,29 @@
 (defvar cisco-router-matchers (list)
   "Matchers defined for cisco-router")
 
-(defmacro cisco-router-matcher(matcher-name regexp group)
+(defmacro cisco-router-matcher(matcher-name regexp group &optional tailstr)
   "Return a function to return the match of GROUP in REGEXP,
 function will set buffer local variable
 `cisco-router-carry-last-match' that can be used in the running
-buffer."
+buffer.
+
+Optionally apply a `tailstr' to the end of the resulting string."
   (let ((funcname
 	 (intern (concat "cisco-router-matcher-" (symbol-name matcher-name)))))
-    (message (concat "defining " (symbol-name funcname)))
     `(progn
        (defun ,funcname (line)
 	 (if (string-match ,regexp line)
-	     (setq cisco-router-last-match (match-string ,group line))
+	     (setq cisco-router-last-match
+		   ;; If we have a string to append, do so first.
+		   (let ((str (match-string ,group line))
+			 (tailstr ,tailstr))
+		     (if tailstr (concat str tailstr) str)))
 	   nil))
        (add-to-list 'cisco-router-matchers ',funcname)
        ',funcname)))
 
-(cisco-router-matcher prefix-list "^\\(ip prefix-list .+\\) +seq" 1)
-(cisco-router-matcher route-map "^\\(route-map .+\\) +\\(permit\\|deny\\)" 1)
+(cisco-router-matcher prefix-list "^\\(ip prefix-list .+\\) +seq" 1 " seq ")
+(cisco-router-matcher route-map "^\\(route-map .+\\) +\\(permit\\|deny\\)" 1 " permit")
 (cisco-router-matcher neighbor "^\\ *\\(neighbor .+?\\) +" 1)
 
 ;; (cisco-router-matcher-route-map "route-map extern-peer-jnet_69_in permit 10")
