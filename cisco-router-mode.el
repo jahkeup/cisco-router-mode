@@ -137,9 +137,9 @@ buffer."
 matches (see cisco-router-matchers) optionally specify
 `fuzzy-lines-above' to support checking above lines for context for
 lines such as route-map where lines may have config between the
-line to be carried and the destination line (default: 2 lines)."
+line to be carried and the destination line (default: 3 lines)."
   (interactive)
-  (if (not fuzzy-lines-above) (setq fuzzy-lines-above 2))
+  (if (not fuzzy-lines-above) (setq fuzzy-lines-above 3))
   (let* ((line (cisco-router-get-line))
 	 (match (cisco-router-carry-match-with-line-tolerance fuzzy-lines-above)))
     (end-of-line)
