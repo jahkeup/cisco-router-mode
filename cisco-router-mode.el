@@ -24,14 +24,14 @@
 (defvar cisco-router-mode-map
   (let
       ((cisco-router-mode-map (make-keymap)))
-    (define-key cisco-router-mode-map "\C-j" 'newline-and-indent)
+    (define-key cisco-router-mode-map "\C-j" 'cisco-router-carry-line)
     cisco-router-mode-map)
   "Keymap for Cisco router configuration major mode")
 
 (defface cisco-router-font-lock-desc-face
   '((t (:inherit font-lock-variable-name-face
-              :underline t)))
-    "cisco-router description underlining face")
+		 :underline t)))
+  "cisco-router description underlining face")
 
 ;; Font locking definitions.
 
@@ -74,6 +74,81 @@
     ("Controllers"       "^[\t ]*controller *\\(.*\\)" 1)
     ("Policy maps"       "^policy-map *\\(.*\\)" 1)
     ))
+
+(defvar cisco-router-matchers (list)
+  "Matchers defined for cisco-router")
+
+(defmacro cisco-router-matcher(matcher-name regexp group)
+  "Return a function to return the match of GROUP in REGEXP,
+function will set buffer local variable
+`cisco-router-carry-last-match' that can be used in the running
+buffer."
+  (let ((funcname
+	 (intern (concat "cisco-router-matcher-" (symbol-name matcher-name)))))
+    (message (concat "defining " (symbol-name funcname)))
+    `(progn
+       (defun ,funcname (line)
+	 (if (string-match ,regexp line)
+	     (setq cisco-router-last-match (match-string ,group line))
+	   nil))
+       (add-to-list 'cisco-router-matchers ',funcname)
+       ',funcname)))
+
+(cisco-router-matcher prefix-list "^\\(ip prefix-list .+\\) +seq" 1)
+(cisco-router-matcher route-map "^\\(route-map .+\\) +\\(permit\\|deny\\)" 1)
+(cisco-router-matcher neighbor "^\\ *\\(neighbor .+?\\) +" 1)
+
+;; (cisco-router-matcher-route-map "route-map extern-peer-jnet_69_in permit 10")
+;; (cisco-router-matcher-neighbor " neighbor 69.43.72.79 peer-group")
+;; (cisco-router-matcher-neighbor "neighbor 69.43.72.70 peer-group")
+
+(defun blank-p (str)
+  (or (null str) (string= "" str)))
+
+(defun cisco-router-carry-line-match (line)
+  (let ((matchers cisco-router-matchers))
+    (setq cisco-router-last-match nil)
+    (while (and (blank-p cisco-router-last-match) matchers)
+      (funcall (car matchers) line)
+      (setq matchers (cdr matchers))))
+  cisco-router-last-match)
+
+(defun cisco-router-get-line ()
+  (thing-at-point 'line))
+
+(defun cisco-router-carry-match-line-above (lines-up)
+  "Check the number of `lines-up' line from the current line for any matches,
+  returns the match."
+  (save-excursion
+    (previous-line lines-up)
+    (cisco-router-carry-line-match (cisco-router-get-line))))
+
+(defun cisco-router-carry-match-with-line-tolerance (lines)
+  "Match `lines' above the current line to be used for carry."
+  (let (match line-pos)
+    (setq line-pos 0)
+    (while (and (blank-p match) (<= line-pos lines))
+      (setq match (cisco-router-carry-match-line-above line-pos))
+      (setq line-pos (1+ line-pos)))
+    match))
+
+(defun cisco-router-carry-line (&optional fuzzy-lines-above)
+  "Carry the line if it matches any of the matchers based on the
+matches (see cisco-router-matchers) optionally specify
+`fuzzy-lines-above' to support checking above lines for context for
+lines such as route-map where lines may have config between the
+line to be carried and the destination line (default: 2 lines)."
+  (interactive)
+  (if (not fuzzy-lines-above) (setq fuzzy-lines-above 2))
+  (let* ((line (cisco-router-get-line))
+	 (match (cisco-router-carry-match-with-line-tolerance fuzzy-lines-above)))
+    (end-of-line)
+    (newline-and-indent)
+    (if (not (blank-p match))
+	(progn
+	  (insert match " ")
+	  (cisco-router-indent-line)))))
+
 
 ;; Indentation definitions.
 (defun cisco-router-indent-line ()
