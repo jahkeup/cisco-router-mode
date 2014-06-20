@@ -152,10 +152,14 @@ line to be carried and the destination line (default: 3 lines)."
     (if (not (blank-p match))
 	(progn
 	  (insert match " ")
-	  (cisco-router-indent-line)))))
+	  (indent-line-to 0) ;; Work around the need for some ravamping below.
+	  (cisco-router-indent-line)))
+    (end-of-line)))
 
 
 ;; Indentation definitions.
+;;
+;; TODO: Revamp this, this isn't maintainable.
 (defun cisco-router-indent-line ()
   "Indent current line as cisco router config line"
   (let ((indent0 "^interface\\|redundancy\\|^line\\|^ip vrf \\|^controller\\|^class-map\\|^policy-map\\|router\\|access-list\\|route-map\\|^vlan\\|^ip access-list")
@@ -163,34 +167,39 @@ line to be carried and the destination line (default: 3 lines)."
     (beginning-of-line)
     (let ((not-indented t)
           (cur-indent 0))
-      (cond ((or (bobp) (looking-at indent0) (looking-at "!")) ; Handles the indent0 and indent1 lines
-;            (message "Indent0")
-             (setq not-indented nil
-                   cur-indent 0))
-            ((looking-at indent1)
-;            (message "Indent1")
-             (setq not-indented nil
-                   cur-indent 1)))
-      (save-excursion ; Indents regular lines depending on the block they're in.
+      (cond
+       ((or (bobp) (looking-at indent0)
+	    (looking-at "!")) ; Handles the indent0 and indent1 lines
+	;; (message "Indent0 first-check")
+	(setq not-indented nil
+	      cur-indent 0))
+       ((looking-at indent1)
+	;; (message "Indent1")
+	(setq not-indented nil
+	      cur-indent 1)))
+      (save-excursion
+        ; Indents regular lines depending on the block they're in.
         (while not-indented
           (forward-line -1)
           (cond ((looking-at indent1)
-;                (message "Indent1 block")
+		 ;; (message "Indent1 block")
                  (setq cur-indent 2
                        not-indented nil))
                 ((looking-at indent0)
-;                (message "Indent0 block")
+		 ;; (message "Indent0 block (while-not indented)")
                  (setq cur-indent 1
                        not-indented nil))
                 ((looking-at "!")
-;                (message "Reached !")
+		 ;; (message "Reached !")
                  (setq cur-indent 0
                        not-indented nil))
                 ((bobp)
-;                (message "Buffer beginning reached")
+		 ;; (message "Buffer beginning reached")
                  (setq cur-indent 0
                        not-indented nil)))))
-      (indent-line-to cur-indent))))
+      (if (looking-at indent0)
+	  (indent-line-to 0)
+	(indent-line-to cur-indent)))))
 
 
 ;; Custom syntax table
